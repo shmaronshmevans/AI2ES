@@ -164,7 +164,6 @@ def interpolate_model_data_to_oksm_locations_groupby(df_model, df_oksm, vars_to_
     xnew_ok = df_oksm["lon"]
     ynew_ok = df_oksm["lat"]
 
-
     df_model = df_model.reset_index().set_index("time")
 
     # if vals != points in interpolation routine
@@ -231,14 +230,10 @@ def interpolate_model_data_to_oksm_locations_groupby(df_model, df_oksm, vars_to_
 
 #     return locations_a, locations_b
 
+
 def get_locations_for_ball_tree_ok(df, oksm_1H_obs):
     locations_a = df.reset_index()[["latitude", "longitude"]]
-    locations_b = (
-        oksm_1H_obs[["lat", "lon"]]
-        .dropna()
-        .drop_duplicates()
-        .reset_index()
-    )
+    locations_b = oksm_1H_obs[["lat", "lon"]].dropna().drop_duplicates().reset_index()
 
     # ball tree to find nysm site locations
     # locations_a ==> build the tree
@@ -304,6 +299,7 @@ def get_ball_tree_indices_ok(model_data, oksm_1H_obs):
 #             df_save = pd.concat([df_save, df_dummy])
 #     print("complete")
 #     return df_save.set_index(["station", "valid_time"])
+
 
 def df_with_oksm_locations(df, df_oksm, indices_list):
     df_closest_locs = df.iloc[indices_list][["latitude", "longitude"]].reset_index()
@@ -501,9 +497,9 @@ def main(month, year, model, init, mask_water=True):
     else:
         pres = "prmsl"
 
-    #nysm_1H_obs, nysm_3H_obs = load_nysm_data(year)
+    # nysm_1H_obs, nysm_3H_obs = load_nysm_data(year)
     oksm_1H_obs, oksm_3H_obs = load_oksm_data(year)
-    #df_model_ny = read_data_ny(model, init, month, year)
+    # df_model_ny = read_data_ny(model, init, month, year)
     df_model_ok = read_data_ok(model, init, month, year)
 
     oksm_1H_obs = oksm_1H_obs.rename(columns={"STID": "station"})
@@ -535,14 +531,14 @@ def main(month, year, model, init, mask_water=True):
             columns=["x", "y"]
         )  # drop x & y if they're columns since reindex will fail with them in original index
 
-    #df_model_ny = df_model_ny.reset_index()[keep_vars]
-    #df_model_ny = reformat_df(df_model_ny)
+    # df_model_ny = df_model_ny.reset_index()[keep_vars]
+    # df_model_ny = reformat_df(df_model_ny)
     df_model_ok = df_model_ok.reset_index()[keep_vars]
     df_model_ok = reformat_df(df_model_ok)
 
     if mask_water:
         # before interpolation or nearest neighbor methods, mask out any grid cells over water
-        #df_model_ny = mask_out_water(model, df_model_ny)
+        # df_model_ny = mask_out_water(model, df_model_ny)
         df_model_ok = mask_out_water(model, df_model_ok)
 
     if model in ["GFS", "NAM"]:
@@ -558,18 +554,18 @@ def main(month, year, model, init, mask_water=True):
             pres,
             "orog",
         ]
-        #df_model_nysm_sites = interpolate_model_data_to_nysm_locations_groupby(
+        # df_model_nysm_sites = interpolate_model_data_to_nysm_locations_groupby(
         #    df_model_ny, nysm_1H_obs, vars_to_interp
-        #)
+        # )
         df_model_oksm_sites = interpolate_model_data_to_oksm_locations_groupby(
             df_model_ok, oksm_1H_obs, vars_to_interp
         )
     elif model == "HRRR":
-        #indices_list_ny = get_ball_tree_indices_ny(df_model_ny, nysm_1H_obs)
+        # indices_list_ny = get_ball_tree_indices_ny(df_model_ny, nysm_1H_obs)
         indices_list_ok = get_ball_tree_indices_ok(df_model_ok, oksm_1H_obs)
-        #df_model_nysm_sites = df_with_nysm_locations(
+        # df_model_nysm_sites = df_with_nysm_locations(
         #    df_model_ny, nysm_1H_obs, indices_list_ny
-        #)
+        # )
         df_model_oksm_sites = df_with_oksm_locations(
             df_model_ok, oksm_1H_obs, indices_list_ok
         )
@@ -585,13 +581,13 @@ def main(month, year, model, init, mask_water=True):
 
     # now get precip forecasts in smallest intervals (e.g., 1-h and 3-h) possible
     if model == "NAM":
-        #model_data_1H_ny = df_model_nysm_sites[df_model_nysm_sites["lead time"] <= 36]
-        #model_data_3H_ny= df_model_nysm_sites[df_model_nysm_sites["lead time"] > 36]
+        # model_data_1H_ny = df_model_nysm_sites[df_model_nysm_sites["lead time"] <= 36]
+        # model_data_3H_ny= df_model_nysm_sites[df_model_nysm_sites["lead time"] > 36]
         model_data_1H_ok = df_model_oksm_sites[df_model_oksm_sites["lead time"] <= 36]
         model_data_3H_ok = df_model_oksm_sites[df_model_oksm_sites["lead time"] > 36]
 
-        #NY
-        #df_model_sites_1H_ny = redefine_precip_intervals_NAM(model_data_1H_ny, 1)
+        # NY
+        # df_model_sites_1H_ny = redefine_precip_intervals_NAM(model_data_1H_ny, 1)
         # df_model_sites_1H_ny = drop_unwanted_time_diffs(df_model_sites_1H_ny, 1.0)
         # df_model_sites_3H_ny = redefine_precip_intervals_NAM(model_data_3H_ny, 3)
         # df_model_sites_3H_ny = drop_unwanted_time_diffs(df_model_sites_3H_ny, 3.0)
@@ -600,7 +596,7 @@ def main(month, year, model, init, mask_water=True):
         # df_model_sites_3H_ny = redefine_precip_intervals_NAM(model_data_3H_ny, 3)
         # df_model_sites_3H_ny = drop_unwanted_time_diffs(df_model_sites_3H_ny, 3.0)
 
-        #OK
+        # OK
         model_data_1H_ok = df_model_oksm_sites[df_model_oksm_sites["lead time"] <= 36]
         model_data_3H_ok = df_model_oksm_sites[df_model_oksm_sites["lead time"] > 36]
         model_data_1H_ok = df_model_oksm_sites[df_model_oksm_sites["lead time"] <= 36]
@@ -610,70 +606,69 @@ def main(month, year, model, init, mask_water=True):
         df_model_sites_3H_ok = redefine_precip_intervals_NAM(model_data_3H_ok, 3)
         df_model_sites_3H_ok = drop_unwanted_time_diffs(df_model_sites_3H_ok, 3.0)
 
-        #df_model_nysm_sites = pd.concat([df_model_sites_1H_ny, df_model_sites_3H_ny])
+        # df_model_nysm_sites = pd.concat([df_model_sites_1H_ny, df_model_sites_3H_ny])
         df_model_oksm_sites = pd.concat([df_model_sites_1H_ok, df_model_sites_3H_ok])
     elif model == "GFS":
-        #df_model_nysm_sites = redefine_precip_intervals_GFS(df_model_nysm_sites)
-        #df_model_nysm_sites = drop_unwanted_time_diffs(df_model_nysm_sites, 3.0)
+        # df_model_nysm_sites = redefine_precip_intervals_GFS(df_model_nysm_sites)
+        # df_model_nysm_sites = drop_unwanted_time_diffs(df_model_nysm_sites, 3.0)
         df_model_oksm_sites = redefine_precip_intervals_GFS(df_model_oksm_sites)
         df_model_oksm_sites = drop_unwanted_time_diffs(df_model_oksm_sites, 3.0)
     elif model == "HRRR":
-        #df_model_nysm_sites = redefine_precip_intervals_HRRR(df_model_nysm_sites)
-        #df_model_nysm_sites = drop_unwanted_time_diffs(df_model_nysm_sites, 1.0)
+        # df_model_nysm_sites = redefine_precip_intervals_HRRR(df_model_nysm_sites)
+        # df_model_nysm_sites = drop_unwanted_time_diffs(df_model_nysm_sites, 1.0)
         df_model_oksm_sites = redefine_precip_intervals_HRRR(df_model_oksm_sites)
         df_model_oksm_sites = drop_unwanted_time_diffs(df_model_oksm_sites, 1.0)
 
     savedir = f"/home/aevans/ai2es/processed_data/{model}/"
     # savedir = f'/home/lgaudet/model-data/GFS/GFSv16_parallel/interp/'
     if mask_water:
-        #df_model_nysm_sites.to_parquet(
+        # df_model_nysm_sites.to_parquet(
         #     f"{savedir}ny/{model}_{init}z_{month}-{year}_interp_to_nysm_sites_mask_water.parquet"
         # )
         df_model_oksm_sites.to_parquet(
             f"{savedir}ok/{model}_{init}z_{month}-{year}_interp_to_oksm_sites_mask_water.parquet"
         )
     else:
-        #df_model_nysm_sites.to_parquet(
+        # df_model_nysm_sites.to_parquet(
         #     f"{savedir}ny/{model}_{init}z_{month}-{year}_interp_to_nysm_sites.parquet"
         # )
         df_model_oksm_sites.to_parquet(
             f"{savedir}ok/{model}_{init}z_{month}-{year}_interp_to_oksm_sites.parquet"
         )
 
-    timer9 = (time.time() - start_time)
+    timer9 = time.time() - start_time
 
     print(f"Saving New Files For :: {model} t{init}z : {year}--{month}")
     print("--- %s seconds ---" % (timer9))
 
-# ignore warnings 
+
+# ignore warnings
 # notebook throws warnings about Dtype
 # this line filters them out of output
 warnings.filterwarnings("ignore")
 
-# Multiprocessing Notes 
-'''
+# Multiprocessing Notes
+"""
 Multiprocessing Pool
 RUN with 75 gb 
 4 tasks per cpu 
-'''
-if __name__ == '__main__':
-    init = '12'
-    p1 = Process(target=main, args=(str(9).zfill(2), 2018, 'HRRR', init))
+"""
+if __name__ == "__main__":
+    init = "12"
+    p1 = Process(target=main, args=(str(9).zfill(2), 2018, "HRRR", init))
     # p2 = Process(target=main, args=(str(9).zfill(2), 2018, 'HRRR', init))
     # p3 = Process(target=main, args=(str(10).zfill(2), 2020, 'HRRR', init))
-    #p4 = Process(target=main, args=(str(month).zfill(2), 2021, 'NAM', init))
-
+    # p4 = Process(target=main, args=(str(month).zfill(2), 2021, 'NAM', init))
 
     p1.start()
     # p2.start()
     # p3.start()
-    #p4.start()s
-
+    # p4.start()s
 
     p1.join()
     # p2.join()
     # p3.join()
-    #p4.join()
+    # p4.join()
 
 
 main()

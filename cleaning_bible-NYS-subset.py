@@ -1,6 +1,7 @@
 import argparse
 import calendar
 import datetime
+
 # import tensorflow as tf
 import glob
 import itertools
@@ -27,6 +28,8 @@ def is_non_zero_file(fpath):
     else:
         print("file not found or corrupt ", fpath)
         return
+
+
 #         raise Exception('No good file found ', fpath)
 
 
@@ -596,12 +599,10 @@ def main(
                 continue
 
 
-
-
 # Multiprocessing v1
 # good if need specific months cleaned
 # if __name__ == '__main__':
-    #  p1 = Process(target=main, args=('nam', 2018, '12', 12, 13))
+#  p1 = Process(target=main, args=('nam', 2018, '12', 12, 13))
 #      p2 = Process(target=main, args=('gfs', 2020, '12', 6, 13))
 #      p3 = Process(target=main, args=('gfs', 2020, '12', 7, 13))
 #      p4 = Process(target=main, args=('gfs', 2021, '12', 5, 13))
@@ -644,9 +645,8 @@ def main(
 # main()
 
 
-
 # multiprocessing v2
-# good for bulk cleaning 
+# good for bulk cleaning
 ranger = np.arange(2018, 2022)
 models = ["nam"]
 
