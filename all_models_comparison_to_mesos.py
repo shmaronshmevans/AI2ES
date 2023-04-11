@@ -12,13 +12,13 @@ from scipy import interpolate
 from sklearn.neighbors import BallTree
 from multiprocessing import Process
 
-def load_nysm_data(year):
-    # these parquet files are created by running "get_resampled_nysm_data.ipynb"
-    nysm_path = "/home/aevans/nwp_bias/data/nysm/"
+# def load_nysm_data(year):
+#     # these parquet files are created by running "get_resampled_nysm_data.ipynb"
+#     nysm_path = "/home/aevans/nwp_bias/data/nysm/"
 
-    nysm_1H_obs = pd.read_parquet(f"{nysm_path}nysm_1H_obs_{year}.parquet")
-    nysm_3H_obs = pd.read_parquet(f"{nysm_path}nysm_3H_obs_{year}.parquet")
-    return nysm_1H_obs, nysm_3H_obs
+#     nysm_1H_obs = pd.read_parquet(f"{nysm_path}nysm_1H_obs_{year}.parquet")
+#     nysm_3H_obs = pd.read_parquet(f"{nysm_path}nysm_3H_obs_{year}.parquet")
+#     return nysm_1H_obs, nysm_3H_obs
 
 
 def load_oksm_data(year):
@@ -30,20 +30,20 @@ def load_oksm_data(year):
     return oksm_1H_obs, oksm_3H_obs
 
 
-def read_data_ny(model, init, month, year):
-    cleaned_data_path = f"/home/aevans/ai2es/cleaned/{model}/"
+# def read_data_ny(model, init, month, year):
+#     cleaned_data_path = f"/home/aevans/ai2es/cleaned/{model}/"
 
-    filelist = glob.glob(f"{cleaned_data_path}{year}/{month}/*t{init}z*.parquet")
-    filelist.sort()
+#     filelist = glob.glob(f"{cleaned_data_path}{year}/{month}/*t{init}z*.parquet")
+#     filelist.sort()
 
-    li = []
-    for filename in filelist:
-        df_temp = pd.read_parquet(filename)
-        li.append(
-            df_temp.reset_index()
-        )  # reset the index in case indices are different among files
-    df = pd.concat(li)
-    return df
+#     li = []
+#     for filename in filelist:
+#         df_temp = pd.read_parquet(filename)
+#         li.append(
+#             df_temp.reset_index()
+#         )  # reset the index in case indices are different among files
+#     df = pd.concat(li)
+#     return df
 
 
 def read_data_ok(model, init, month, year):
@@ -92,60 +92,60 @@ def interpolate_func_griddata(values, model_lon, model_lat, xnew, ynew):
     return vals
 
 
-def interpolate_model_data_to_nysm_locations_groupby(df_model, df_nysm, vars_to_interp):
-    """
-    Use this function if you would like to interpolate to NYSM locations rather than use the ball tree with
-    the existing model grid.
-    This function interpolates the model grid to the NYSM site locations for each variable in dataframe.
-    The new dataframe is then returned.
+# def interpolate_model_data_to_nysm_locations_groupby(df_model, df_nysm, vars_to_interp):
+#     """
+#     Use this function if you would like to interpolate to NYSM locations rather than use the ball tree with
+#     the existing model grid.
+#     This function interpolates the model grid to the NYSM site locations for each variable in dataframe.
+#     The new dataframe is then returned.
 
-    This function should not be used with the HRRR grid, as it is incredibly slow.
-    """
-    # New York
-    df_nysm = df_nysm.groupby("station").mean()[["lat", "lon"]]
-    xnew = df_nysm["lon"]
-    ynew = df_nysm["lat"]
+#     This function should not be used with the HRRR grid, as it is incredibly slow.
+#     """
+#     # New York
+#     df_nysm = df_nysm.groupby("station").mean()[["lat", "lon"]]
+#     xnew = df_nysm["lon"]
+#     ynew = df_nysm["lat"]
 
-    df_model = df_model.reset_index().set_index("time")
+#     df_model = df_model.reset_index().set_index("time")
 
-    # if vals != points in interpolation routine
-    # called a few lines below, it's because this line is finding multiple of the same valid_times which occurs at times later in the month
-    # grab a smaller subset of the data encompassing New York State and Oklahoma
-    df_model_ny = df_model[
-        (df_model.latitude >= 39.0)
-        & (df_model.latitude <= 47.0)
-        & (df_model.longitude <= -71.0)
-        & (df_model.longitude >= -80.0)
-    ]
+#     # if vals != points in interpolation routine
+#     # called a few lines below, it's because this line is finding multiple of the same valid_times which occurs at times later in the month
+#     # grab a smaller subset of the data encompassing New York State and Oklahoma
+#     df_model_ny = df_model[
+#         (df_model.latitude >= 39.0)
+#         & (df_model.latitude <= 47.0)
+#         & (df_model.longitude <= -71.0)
+#         & (df_model.longitude >= -80.0)
+#     ]
 
-    model_lon_lat_ny = df_model_ny[
-        df_model_ny["valid_time"] == df_model_ny["valid_time"].unique().min()
-    ]
+#     model_lon_lat_ny = df_model_ny[
+#         df_model_ny["valid_time"] == df_model_ny["valid_time"].unique().min()
+#     ]
 
-    model_lon_ny = model_lon_lat_ny["longitude"].values
-    model_lat_ny = model_lon_lat_ny["latitude"].values
+#     model_lon_ny = model_lon_lat_ny["longitude"].values
+#     model_lat_ny = model_lon_lat_ny["latitude"].values
 
-    df_model = df_model_ny[df_model_ny["longitude"].isin(model_lon_ny)]
-    df_model = df_model.reset_index()
+#     df_model = df_model_ny[df_model_ny["longitude"].isin(model_lon_ny)]
+#     df_model = df_model.reset_index()
 
-    # NEED TO FIX THIS
-    df = pd.DataFrame()
-    for v, var in enumerate(vars_to_interp):
-        print(var)
-        df[var] = df_model.groupby(["time", "valid_time"])[var].apply(
-            interpolate_func_griddata, model_lon_ny, model_lat_ny, xnew, ynew
-        )
+#     # NEED TO FIX THIS
+#     df = pd.DataFrame()
+#     for v, var in enumerate(vars_to_interp):
+#         print(var)
+#         df[var] = df_model.groupby(["time", "valid_time"])[var].apply(
+#             interpolate_func_griddata, model_lon_ny, model_lat_ny, xnew, ynew
+#         )
 
-    df_explode = df.apply(pd.Series.explode)
+#     df_explode = df.apply(pd.Series.explode)
 
-    # add in the lat & lon & station
-    if "latitude" in df_explode.keys():
-        print("adding NYSM site column")
-        nysm_sites = df_nysm.reset_index().station.unique()
-        model_interp_lats = df_explode.latitude.unique()
-        map_dict = {model_interp_lats[i]: nysm_sites[i] for i in range(len(nysm_sites))}
-        df_explode["station"] = df_explode["latitude"].map(map_dict)
-    return df_explode
+#     # add in the lat & lon & station
+#     if "latitude" in df_explode.keys():
+#         print("adding NYSM site column")
+#         nysm_sites = df_nysm.reset_index().station.unique()
+#         model_interp_lats = df_explode.latitude.unique()
+#         map_dict = {model_interp_lats[i]: nysm_sites[i] for i in range(len(nysm_sites))}
+#         df_explode["station"] = df_explode["latitude"].map(map_dict)
+#     return df_explode
 
 
 def interpolate_model_data_to_oksm_locations_groupby(df_model, df_oksm, vars_to_interp):
@@ -208,28 +208,28 @@ def interpolate_model_data_to_oksm_locations_groupby(df_model, df_oksm, vars_to_
     return df_explode
 
 
-def get_locations_for_ball_tree(df, nysm_1H_obs):
-    locations_a = df.reset_index()[["latitude", "longitude"]]
-    locations_b = (
-        nysm_1H_obs[["lat", "lon"]]
-        .dropna()
-        .drop_duplicates()
-        .reset_index()
-    )
+# def get_locations_for_ball_tree(df, nysm_1H_obs):
+#     locations_a = df.reset_index()[["latitude", "longitude"]]
+#     locations_b = (
+#         nysm_1H_obs[["lat", "lon"]]
+#         .dropna()
+#         .drop_duplicates()
+#         .reset_index()
+#     )
 
-        # ball tree to find nysm site locations
-    # locations_a ==> build the tree
-    # locations_b ==> query the tree
-    # Creates new columns converting coordinate degrees to radians.
-    for column in locations_a[["latitude", "longitude"]]:
-        rad = np.deg2rad(locations_a[column].values)
-        locations_a[f"{column}_rad"] = rad
+#         # ball tree to find nysm site locations
+#     # locations_a ==> build the tree
+#     # locations_b ==> query the tree
+#     # Creates new columns converting coordinate degrees to radians.
+#     for column in locations_a[["latitude", "longitude"]]:
+#         rad = np.deg2rad(locations_a[column].values)
+#         locations_a[f"{column}_rad"] = rad
 
-    for column in locations_b[["lat", "lon"]]:
-        rad = np.deg2rad(locations_b[column].values)
-        locations_b[f"{column}_rad"] = rad
+#     for column in locations_b[["lat", "lon"]]:
+#         rad = np.deg2rad(locations_b[column].values)
+#         locations_b[f"{column}_rad"] = rad
 
-    return locations_a, locations_b
+#     return locations_a, locations_b
 
 def get_locations_for_ball_tree_ok(df, oksm_1H_obs):
     locations_a = df.reset_index()[["latitude", "longitude"]]
@@ -255,20 +255,20 @@ def get_locations_for_ball_tree_ok(df, oksm_1H_obs):
     return locations_a, locations_b
 
 
-def get_ball_tree_indices_ny(model_data, nysm_1H_obs):
-    locations_a, locations_b = get_locations_for_ball_tree(model_data, nysm_1H_obs)
-    # Takes the first group's latitude and longitude values to construct the ball tree.
+# def get_ball_tree_indices_ny(model_data, nysm_1H_obs):
+#     locations_a, locations_b = get_locations_for_ball_tree(model_data, nysm_1H_obs)
+#     # Takes the first group's latitude and longitude values to construct the ball tree.
 
-    ball = BallTree(
-        locations_a[["latitude_rad", "longitude_rad"]].values, metric="haversine"
-    )
-    # k: The number of neighbors to return from tree
-    k = 1
-    # Executes a query with the second group. This will also return two arrays.
-    distances, indices = ball.query(locations_b[["lat_rad", "lon_rad"]].values, k=k)
-    # get indices in a format where we can query the df
-    indices_list = [indices[x][0] for x in range(len(indices))]
-    return indices_list
+#     ball = BallTree(
+#         locations_a[["latitude_rad", "longitude_rad"]].values, metric="haversine"
+#     )
+#     # k: The number of neighbors to return from tree
+#     k = 1
+#     # Executes a query with the second group. This will also return two arrays.
+#     distances, indices = ball.query(locations_b[["lat_rad", "lon_rad"]].values, k=k)
+#     # get indices in a format where we can query the df
+#     indices_list = [indices[x][0] for x in range(len(indices))]
+#     return indices_list
 
 
 def get_ball_tree_indices_ok(model_data, oksm_1H_obs):
@@ -287,23 +287,23 @@ def get_ball_tree_indices_ok(model_data, oksm_1H_obs):
     return indices_list
 
 
-def df_with_nysm_locations(df, df_nysm, indices_list):
-    df_closest_locs = df.iloc[indices_list][["latitude", "longitude"]].reset_index()
-    df_nysm_station_locs = df_nysm.groupby("station")[["lat", "lon"]].mean()
+# def df_with_nysm_locations(df, df_nysm, indices_list):
+#     df_closest_locs = df.iloc[indices_list][["latitude", "longitude"]].reset_index()
+#     df_nysm_station_locs = df_nysm.groupby("station")[["lat", "lon"]].mean()
 
-    for x in range(len(df_nysm_station_locs.index)):
-        df_dummy = df[
-            (df.latitude == df_closest_locs.latitude[x])
-            & (df.longitude == df_closest_locs.longitude[x])
-        ]
-        df_dummy = df_dummy.reset_index()
-        df_dummy["station"] = df_nysm_station_locs.index[x]
-        if x == 0:
-            df_save = df_dummy
-        else:
-            df_save = pd.concat([df_save, df_dummy])
-    print("complete")
-    return df_save.set_index(["station", "valid_time"])
+#     for x in range(len(df_nysm_station_locs.index)):
+#         df_dummy = df[
+#             (df.latitude == df_closest_locs.latitude[x])
+#             & (df.longitude == df_closest_locs.longitude[x])
+#         ]
+#         df_dummy = df_dummy.reset_index()
+#         df_dummy["station"] = df_nysm_station_locs.index[x]
+#         if x == 0:
+#             df_save = df_dummy
+#         else:
+#             df_save = pd.concat([df_save, df_dummy])
+#     print("complete")
+#     return df_save.set_index(["station", "valid_time"])
 
 def df_with_oksm_locations(df, df_oksm, indices_list):
     df_closest_locs = df.iloc[indices_list][["latitude", "longitude"]].reset_index()
@@ -501,9 +501,9 @@ def main(month, year, model, init, mask_water=True):
     else:
         pres = "prmsl"
 
-    nysm_1H_obs, nysm_3H_obs = load_nysm_data(year)
+    #nysm_1H_obs, nysm_3H_obs = load_nysm_data(year)
     oksm_1H_obs, oksm_3H_obs = load_oksm_data(year)
-    df_model_ny = read_data_ny(model, init, month, year)
+    #df_model_ny = read_data_ny(model, init, month, year)
     df_model_ok = read_data_ok(model, init, month, year)
 
     oksm_1H_obs = oksm_1H_obs.rename(columns={"STID": "station"})
@@ -526,23 +526,23 @@ def main(month, year, model, init, mask_water=True):
         "orog",
     ]
 
-    if "x" in df_model_ny.keys():
-        df_model_ny = df_model_ny.drop(
-            columns=["x", "y"]
-        )  # drop x & y if they're columns since reindex will fail with them in original index
+    # if "x" in df_model_ny.keys():
+    #     df_model_ny = df_model_ny.drop(
+    #         columns=["x", "y"]
+    #     )  # drop x & y if they're columns since reindex will fail with them in original index
     if "x" in df_model_ok.keys():
         df_model_ok = df_model_ok.drop(
             columns=["x", "y"]
         )  # drop x & y if they're columns since reindex will fail with them in original index
 
-    df_model_ny = df_model_ny.reset_index()[keep_vars]
-    df_model_ny = reformat_df(df_model_ny)
+    #df_model_ny = df_model_ny.reset_index()[keep_vars]
+    #df_model_ny = reformat_df(df_model_ny)
     df_model_ok = df_model_ok.reset_index()[keep_vars]
     df_model_ok = reformat_df(df_model_ok)
 
     if mask_water:
         # before interpolation or nearest neighbor methods, mask out any grid cells over water
-        df_model_ny = mask_out_water(model, df_model_ny)
+        #df_model_ny = mask_out_water(model, df_model_ny)
         df_model_ok = mask_out_water(model, df_model_ok)
 
     if model in ["GFS", "NAM"]:
@@ -558,47 +558,47 @@ def main(month, year, model, init, mask_water=True):
             pres,
             "orog",
         ]
-        df_model_nysm_sites = interpolate_model_data_to_nysm_locations_groupby(
-            df_model_ny, nysm_1H_obs, vars_to_interp
-        )
+        #df_model_nysm_sites = interpolate_model_data_to_nysm_locations_groupby(
+        #    df_model_ny, nysm_1H_obs, vars_to_interp
+        #)
         df_model_oksm_sites = interpolate_model_data_to_oksm_locations_groupby(
             df_model_ok, oksm_1H_obs, vars_to_interp
         )
     elif model == "HRRR":
-        indices_list_ny = get_ball_tree_indices_ny(df_model_ny, nysm_1H_obs)
+        #indices_list_ny = get_ball_tree_indices_ny(df_model_ny, nysm_1H_obs)
         indices_list_ok = get_ball_tree_indices_ok(df_model_ok, oksm_1H_obs)
-        df_model_nysm_sites = df_with_nysm_locations(
-            df_model_ny, nysm_1H_obs, indices_list_ny
-        )
+        #df_model_nysm_sites = df_with_nysm_locations(
+        #    df_model_ny, nysm_1H_obs, indices_list_ny
+        #)
         df_model_oksm_sites = df_with_oksm_locations(
             df_model_ok, oksm_1H_obs, indices_list_ok
         )
 
     # to avoid future issues, convert lead time to float, round, and then convert to integer
     # without rounding first, the conversion to int will round to the floor, leading to incorrect lead times
-    df_model_nysm_sites["lead time"] = (
-        df_model_nysm_sites["lead time"].astype(float).round(0).astype(int)
-    )
+    # df_model_nysm_sites["lead time"] = (
+    #     df_model_nysm_sites["lead time"].astype(float).round(0).astype(int)
+    # )
     df_model_oksm_sites["lead time"] = (
         df_model_oksm_sites["lead time"].astype(float).round(0).astype(int)
     )
 
     # now get precip forecasts in smallest intervals (e.g., 1-h and 3-h) possible
     if model == "NAM":
-        model_data_1H_ny = df_model_nysm_sites[df_model_nysm_sites["lead time"] <= 36]
-        model_data_3H_ny= df_model_nysm_sites[df_model_nysm_sites["lead time"] > 36]
+        #model_data_1H_ny = df_model_nysm_sites[df_model_nysm_sites["lead time"] <= 36]
+        #model_data_3H_ny= df_model_nysm_sites[df_model_nysm_sites["lead time"] > 36]
         model_data_1H_ok = df_model_oksm_sites[df_model_oksm_sites["lead time"] <= 36]
         model_data_3H_ok = df_model_oksm_sites[df_model_oksm_sites["lead time"] > 36]
 
         #NY
-        df_model_sites_1H_ny = redefine_precip_intervals_NAM(model_data_1H_ny, 1)
-        df_model_sites_1H_ny = drop_unwanted_time_diffs(df_model_sites_1H_ny, 1.0)
-        df_model_sites_3H_ny = redefine_precip_intervals_NAM(model_data_3H_ny, 3)
-        df_model_sites_3H_ny = drop_unwanted_time_diffs(df_model_sites_3H_ny, 3.0)
-        df_model_sites_1H_ny = redefine_precip_intervals_NAM(model_data_1H_ny, 1)
-        df_model_sites_1H_ny = drop_unwanted_time_diffs(df_model_sites_1H_ny, 1.0)
-        df_model_sites_3H_ny = redefine_precip_intervals_NAM(model_data_3H_ny, 3)
-        df_model_sites_3H_ny = drop_unwanted_time_diffs(df_model_sites_3H_ny, 3.0)
+        #df_model_sites_1H_ny = redefine_precip_intervals_NAM(model_data_1H_ny, 1)
+        # df_model_sites_1H_ny = drop_unwanted_time_diffs(df_model_sites_1H_ny, 1.0)
+        # df_model_sites_3H_ny = redefine_precip_intervals_NAM(model_data_3H_ny, 3)
+        # df_model_sites_3H_ny = drop_unwanted_time_diffs(df_model_sites_3H_ny, 3.0)
+        # df_model_sites_1H_ny = redefine_precip_intervals_NAM(model_data_1H_ny, 1)
+        # df_model_sites_1H_ny = drop_unwanted_time_diffs(df_model_sites_1H_ny, 1.0)
+        # df_model_sites_3H_ny = redefine_precip_intervals_NAM(model_data_3H_ny, 3)
+        # df_model_sites_3H_ny = drop_unwanted_time_diffs(df_model_sites_3H_ny, 3.0)
 
         #OK
         model_data_1H_ok = df_model_oksm_sites[df_model_oksm_sites["lead time"] <= 36]
@@ -610,32 +610,32 @@ def main(month, year, model, init, mask_water=True):
         df_model_sites_3H_ok = redefine_precip_intervals_NAM(model_data_3H_ok, 3)
         df_model_sites_3H_ok = drop_unwanted_time_diffs(df_model_sites_3H_ok, 3.0)
 
-        df_model_nysm_sites = pd.concat([df_model_sites_1H_ny, df_model_sites_3H_ny])
+        #df_model_nysm_sites = pd.concat([df_model_sites_1H_ny, df_model_sites_3H_ny])
         df_model_oksm_sites = pd.concat([df_model_sites_1H_ok, df_model_sites_3H_ok])
     elif model == "GFS":
-        df_model_nysm_sites = redefine_precip_intervals_GFS(df_model_nysm_sites)
-        df_model_nysm_sites = drop_unwanted_time_diffs(df_model_nysm_sites, 3.0)
+        #df_model_nysm_sites = redefine_precip_intervals_GFS(df_model_nysm_sites)
+        #df_model_nysm_sites = drop_unwanted_time_diffs(df_model_nysm_sites, 3.0)
         df_model_oksm_sites = redefine_precip_intervals_GFS(df_model_oksm_sites)
         df_model_oksm_sites = drop_unwanted_time_diffs(df_model_oksm_sites, 3.0)
     elif model == "HRRR":
-        df_model_nysm_sites = redefine_precip_intervals_HRRR(df_model_nysm_sites)
-        df_model_nysm_sites = drop_unwanted_time_diffs(df_model_nysm_sites, 1.0)
+        #df_model_nysm_sites = redefine_precip_intervals_HRRR(df_model_nysm_sites)
+        #df_model_nysm_sites = drop_unwanted_time_diffs(df_model_nysm_sites, 1.0)
         df_model_oksm_sites = redefine_precip_intervals_HRRR(df_model_oksm_sites)
         df_model_oksm_sites = drop_unwanted_time_diffs(df_model_oksm_sites, 1.0)
 
     savedir = f"/home/aevans/ai2es/processed_data/{model}/"
     # savedir = f'/home/lgaudet/model-data/GFS/GFSv16_parallel/interp/'
     if mask_water:
-        df_model_nysm_sites.to_parquet(
-            f"{savedir}ny/{model}_{init}z_{month}-{year}_interp_to_nysm_sites_mask_water.parquet"
-        )
+        #df_model_nysm_sites.to_parquet(
+        #     f"{savedir}ny/{model}_{init}z_{month}-{year}_interp_to_nysm_sites_mask_water.parquet"
+        # )
         df_model_oksm_sites.to_parquet(
             f"{savedir}ok/{model}_{init}z_{month}-{year}_interp_to_oksm_sites_mask_water.parquet"
         )
     else:
-        df_model_nysm_sites.to_parquet(
-            f"{savedir}ny/{model}_{init}z_{month}-{year}_interp_to_nysm_sites.parquet"
-        )
+        #df_model_nysm_sites.to_parquet(
+        #     f"{savedir}ny/{model}_{init}z_{month}-{year}_interp_to_nysm_sites.parquet"
+        # )
         df_model_oksm_sites.to_parquet(
             f"{savedir}ok/{model}_{init}z_{month}-{year}_interp_to_oksm_sites.parquet"
         )
